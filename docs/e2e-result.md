@@ -33,3 +33,26 @@ docs/architecture.md, now live.
 - Employer confidential balance + overdraft proof; SAC wrap/unwrap (USDC on/off-ramp).
 - Withdraw circuit + flow; auditor view-key disclosure.
 - Frontend (employer / employee / auditor) + self-serve demo-org onboarding.
+
+---
+
+## Increment A — conservation + integrity (2026-06-28)
+
+`ConfidentialPayroll` now derives the total and the per-recipient ciphertexts **from the
+verifier-attested `public_inputs`** (no unchecked args), and conserves the revealed total
+against a funded pool.
+
+Deployed (pool model): `CDZPVZTMVTXSMFOZH4GYCXISVBOI2FSJZZVK6SXGPYGJKHS452C5WYDM`
+
+| Check | Result |
+|---|---|
+| `fund(20000)` → `pool()` | ✅ 20000 |
+| `run_payroll` (valid) → event `payroll=(4, 15050)` | ✅ |
+| `pool()` after payroll | ✅ 4950 (20000 − 15050 conserved) |
+| **Integrity:** `balance_of(0)` == `public_inputs[64..192]` | ✅ exact match (ciphertext bound to proof) |
+| **Conservation guard:** pool < total | ✅ `InsufficientPool` (#5) |
+| Replay / tampered proof | ✅ (rejected / reverts — see above) |
+
+Privacy model (this increment): individual salaries hidden inside ElGamal ciphertexts;
+aggregate total revealed (auditor-visible) and conserved. Funding is mock (integer pool);
+real USDC via SAC is the next increment.
