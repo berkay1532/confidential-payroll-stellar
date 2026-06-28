@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = ["payroll"]
+
+# Future members (added as the spike unblocks them):
+#   "verifier"  — UltraHonk/BN254 proof verification gateway
+#   "policy"    — view-key registry, allow-list, limits
