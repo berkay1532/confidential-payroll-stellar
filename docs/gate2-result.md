@@ -1,4 +1,10 @@
-# Gate 2/3 result — crypto core: ✅ provable, ❌ UltraHonk on-chain verification does NOT scale
+# Gate 2/3 result — crypto core: ✅ provable, ✅ on-chain verified (with the UPDATED verifier)
+
+> **⚠️ SUPERSEDED:** The "pivot to Groth16" conclusion below was based on the OLD verifier
+> (`indextree/...`, soroban-sdk 25, Arkworks software math). The root cause was the verifier,
+> not UltraHonk. With the **updated host-function verifier** the crypto core verifies on-chain
+> cheaply. **We keep Noir + UltraHonk — no Groth16 pivot.** See the RESOLUTION section at the bottom.
+
 
 **Date:** 2026-06-28 · **Network:** Stellar testnet
 
@@ -50,3 +56,30 @@ The Stellar ZK docs (`developers.stellar.org/docs/build/apps/zk`) reference the 
 **Conclusion:** the UltraHonk Soroban verifier is a work-in-progress, not production-ready for non-trivial circuits. This is not a misconfiguration on our side — the tool isn't there yet. Betting a production MVP on it is unacceptable risk.
 
 **Decision: pivot on-chain verification to Groth16** (constant-cost single `pairing_check` host call), via **Circom + BN254**. Circuits stay in spirit identical (EC-ElGamal + range + commitment); `circomlib` Poseidon + `ec-elgamal-circom` (Baby Jubjub) are usable as-is. Starting points: `jayz22/soroban-examples` (p25-preview), native `pairing_check`/`g1_mul` host functions.
+
+---
+
+## ✅ RESOLUTION (2026-06-28) — UltraHonk works; root cause was the verifier version
+
+A community contact who hit the exact same `Budget ExceededLimit` shared the fix: the old verifier pins **soroban-sdk 25.0.0-rc.2** (rev `acffbbd…`), which **predates the CAP-80 BN254 host functions**, so it did the pairing/MSM in WASM (Arkworks userland) → over budget. The **updated verifier** is on soroban-sdk 26 and routes EC ops through the native host functions.
+
+**Use this verifier:**
+- Repo: `yugocabrio/rs-soroban-ultrahonk`
+- Commit (HEAD): `661db07200f890b1bd9a7349ed787c70a706dd12` (Nethermind-maintained)
+- soroban-sdk **26.0.1**; verifier crate uses `soroban_sdk::crypto::bn254::{Bn254G1Affine, Bn254G2Affine, Bn254Fr}` (native CAP-80)
+- Same toolchain: Noir `1.0.0-beta.9` + bb `0.87.0`, `--oracle_hash keccak`
+- Per-tx instruction budget is now **400M** (testnet + mainnet)
+
+**Proof (testnet) — same 8,510-gate crypto-core circuit that FAILED on the old verifier:**
+
+| | Old verifier (sdk25, WASM) | New verifier (sdk26, host fns) |
+|---|---|---|
+| 18-gate trivial circuit | ✅ ~344k stroops | — |
+| **8,510-gate crypto core** | ❌ `Budget ExceededLimit` | ✅ **verified, ~125k stroops** |
+
+- Host-fn verifier contract: `CACKNXTZTZR2E36I46Q4L5GPVZO5CBRYUOQROUJF4XLZX3GOIZG323Q3`
+- ✅ valid proof → verified: tx `6ef84747236ed75774f18082560fae8e88a21f53da13b842ead712e4f992cb31`
+- ✅ tampered public input → rejected: `Error(Contract, #4)` (VerificationFailed)
+- Cost is ~constant and *cheaper* than the old WASM verifier on a trivial circuit → batch scaling (N recipients) is comfortably within budget.
+
+**Decision (final): keep Noir + UltraHonk.** Wire up `rs-soroban-ultrahonk` @ `661db07` as the verifier gateway. The earlier Groth16 pivot is cancelled. Gate 1, 2, and the cost concern (Gate 3) are all green.

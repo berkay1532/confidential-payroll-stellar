@@ -15,14 +15,14 @@ The Noir → Soroban (UltraHonk/BN254) verifier pipeline is newer/experimental. 
 
 **Green:** on-chain verification succeeds and fits the instruction budget. **Red:** fall back to Circom + BN254 Groth16 (mature path) — same BN254 host functions, more ready libraries.
 
-## Gate 2 — Confidential primitives in Noir
+## Gate 2 — Confidential primitives in Noir — ✅ GREEN (2026-06-28)
 - [ ] Baby Jubjub ElGamal encryption in a Noir circuit (1 recipient).
 - [ ] One range proof (`amount ∈ [0, 2^40]`).
 - [ ] Poseidon hash usage.
 
 **Green:** circuit compiles and proves locally. **Red:** assess library gaps; port from circomlib / consider Circom fallback.
 
-## Gate 3 — Scale & budget
+## Gate 3 — Scale & budget — ✅ GREEN (host-fn verifier, ~constant cost)
 - [ ] Measure constraint count for N=1 recipient; extrapolate to N=8 and N=16.
 - [ ] Confirm proving time is acceptable client-side (target: a few seconds to low tens of seconds).
 - [ ] Confirm one on-chain batch verification fits the per-tx instruction budget.
