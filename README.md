@@ -68,7 +68,8 @@ confidential-payroll/
 
 ## Status / roadmap
 
-- [ ] **Spike (gate):** Noir → Soroban verifier path proven end-to-end (see [`docs/spike-plan.md`](docs/spike-plan.md))
+- [x] **Spike Gate 1:** Noir → Soroban verifier path proven end-to-end on testnet ✅ (see [`docs/gate1-result.md`](docs/gate1-result.md))
+- [ ] Spike Gate 2: Baby Jubjub ElGamal + range proof + Poseidon in a Noir circuit
 - [ ] MVP: single demo-org, fixed N employees, batch confidential payroll, withdraw, auditor view
 - [ ] 10+ real users onboarded (self-serve demo-org flow)
 - [ ] Production deploy + analytics + demo video

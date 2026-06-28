@@ -2,8 +2,10 @@
 
 Goal: prove the **riskiest assumptions** of the Noir + Soroban path *before* committing the full team. Each gate is binary: green → proceed, red → fix or fall back.
 
-## Gate 1 — Noir → Soroban verifier path (HIGHEST RISK on this stack)
+## Gate 1 — Noir → Soroban verifier path (HIGHEST RISK on this stack) — ✅ GREEN (2026-06-28)
 The Noir → Soroban (UltraHonk/BN254) verifier pipeline is newer/experimental. Prove it works before anything else.
+
+> **Result:** PASSED on testnet — valid proof verifies, invalid proof rejected. See [`gate1-result.md`](gate1-result.md). Key finding: the path is **version-pinned** (nargo `1.0.0-beta.9` + bb `v0.87.0`); the latest toolchain is incompatible.
 
 - [ ] Install Noir (`noirup`) + the backend (Barretenberg/UltraHonk).
 - [ ] Write a trivial Noir circuit (e.g. prove `a * b == c`).
