@@ -38,3 +38,15 @@ Both keep the **same architecture** (encrypted balances, batch proof, verifier-g
 - Crypto core feasibility: **proven** (it computes, proves, verifies natively).
 - On-chain verification approach: **must be Groth16** (UltraHonk-WASM rejected on cost grounds).
 - This vindicates the constant-cost rationale behind the original Circom+BN254+Groth16 option — applied now with evidence.
+
+## Confirmation from official sources (2026-06-28)
+
+The Stellar ZK docs (`developers.stellar.org/docs/build/apps/zk`) reference the `indextree/ultrahonk_soroban_contract` as the example verifier. Its milestone report (HackMD) explicitly states:
+
+- Without `--limits unlimited`, verification triggers **`Error(Budget, ExceededLimit)`** (the exact error we hit).
+- "Optimization is **necessary before testnet deployment**."
+- Native **BN254 + Poseidon2 precompile integration is FUTURE work** ("Integrating … to reduce fees") — the current verifier does not yet fully use the host functions.
+
+**Conclusion:** the UltraHonk Soroban verifier is a work-in-progress, not production-ready for non-trivial circuits. This is not a misconfiguration on our side — the tool isn't there yet. Betting a production MVP on it is unacceptable risk.
+
+**Decision: pivot on-chain verification to Groth16** (constant-cost single `pairing_check` host call), via **Circom + BN254**. Circuits stay in spirit identical (EC-ElGamal + range + commitment); `circomlib` Poseidon + `ec-elgamal-circom` (Baby Jubjub) are usable as-is. Starting points: `jayz22/soroban-examples` (p25-preview), native `pairing_check`/`g1_mul` host functions.
