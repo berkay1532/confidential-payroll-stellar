@@ -1,0 +1,6 @@
+[package]
+name = "gate2_probe"
+type = "bin"
+authors = [""]
+
+[dependencies]
