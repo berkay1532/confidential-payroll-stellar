@@ -1,0 +1,6 @@
+[package]
+name = "confidential_payroll_withdraw"
+type = "bin"
+authors = [""]
+
+[dependencies]

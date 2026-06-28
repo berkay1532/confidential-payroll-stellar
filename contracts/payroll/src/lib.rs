@@ -25,10 +25,11 @@ const FIELD: u32 = 32; // bytes per field element
 #[contracttype]
 #[derive(Clone)]
 pub enum DataKey {
-    Verifier,
-    Token, // SAC address of the payroll asset (e.g. USDC)
-    Pool,  // available-to-distribute (funded - distributed)
-    Balance(u32), // recipient index -> stored ElGamal ciphertext (c1|c2, 128 bytes)
+    Verifier,         // batch payroll proof verifier
+    WithdrawVerifier, // withdraw proof verifier (different circuit/VK)
+    Token,            // SAC address of the payroll asset (e.g. USDC)
+    Pool,             // available-to-distribute (funded - distributed)
+    Balance(u32),     // recipient index -> stored ElGamal ciphertext (c1|c2, 128 bytes)
     UsedNonce(BytesN<32>),
 }
 
@@ -40,6 +41,8 @@ pub enum Error {
     ReplayedNonce = 3,
     BadPublicInputs = 4,
     InsufficientPool = 5,
+    BalanceMismatch = 6,
+    NoBalance = 7,
 }
 
 #[contract]
@@ -47,9 +50,12 @@ pub struct ConfidentialPayroll;
 
 #[contractimpl]
 impl ConfidentialPayroll {
-    /// Wire up the verifier and payroll token (SAC) at deploy time; pool starts empty.
-    pub fn __constructor(env: Env, verifier: Address, token: Address) {
+    /// Wire up the batch + withdraw verifiers and payroll token (SAC) at deploy time.
+    pub fn __constructor(env: Env, verifier: Address, withdraw_verifier: Address, token: Address) {
         env.storage().instance().set(&DataKey::Verifier, &verifier);
+        env.storage()
+            .instance()
+            .set(&DataKey::WithdrawVerifier, &withdraw_verifier);
         env.storage().instance().set(&DataKey::Token, &token);
         env.storage().instance().set(&DataKey::Pool, &0i128);
     }
@@ -144,6 +150,63 @@ impl ConfidentialPayroll {
         env.events()
             .publish((symbol_short!("payroll"), employer), (n, total_i));
         Ok(n)
+    }
+
+    /// Employee withdraws a revealed amount from their confidential balance.
+    ///
+    /// The withdraw proof attests: ownership of the balance, solvency (0 <= w <= bal), and a
+    /// correctly-formed new balance ciphertext. Public-input layout (9 fields):
+    ///   old C (c1x,c1y,c2x,c2y) | w | new C' (c1x,c1y,c2x,c2y)
+    pub fn withdraw(
+        env: Env,
+        employee: Address,
+        index: u32,
+        public_inputs: Bytes,
+        proof: Bytes,
+    ) -> Result<i128, Error> {
+        employee.require_auth();
+
+        if public_inputs.len() != 9 * FIELD {
+            return Err(Error::BadPublicInputs);
+        }
+
+        // Verification gateway: traps on an invalid withdraw proof.
+        let wv: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::WithdrawVerifier)
+            .ok_or(Error::NotInitialized)?;
+        let verify_fn: Symbol = Symbol::new(&env, "verify_proof");
+        let args = vec![&env, public_inputs.clone().into_val(&env), proof.into_val(&env)];
+        env.invoke_contract::<()>(&wv, &verify_fn, args);
+
+        // The proof's old ciphertext (fields 0..4) must equal the stored balance.
+        let old_ct = public_inputs.slice(0..4 * FIELD);
+        let stored: Bytes = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Balance(index))
+            .ok_or(Error::NoBalance)?;
+        if stored != old_ct {
+            return Err(Error::BalanceMismatch);
+        }
+
+        // w = field 4 ; new ciphertext = fields 5..9
+        let w = read_u128_be(&public_inputs, 4 * FIELD + 16, 16) as i128;
+        let new_ct = public_inputs.slice(5 * FIELD..9 * FIELD);
+        env.storage().persistent().set(&DataKey::Balance(index), &new_ct);
+
+        // Pay out real tokens to the employee.
+        let token: Address = env.storage().instance().get(&DataKey::Token).unwrap();
+        token::TokenClient::new(&env, &token).transfer(
+            &env.current_contract_address(),
+            &employee,
+            &w,
+        );
+
+        env.events()
+            .publish((symbol_short!("withdraw"), employee), (index, w));
+        Ok(w)
     }
 
     /// Read a stored (still-encrypted) balance ciphertext by recipient index.

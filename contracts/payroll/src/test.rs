@@ -2,18 +2,19 @@
 use super::*;
 use soroban_sdk::{testutils::Address as _, token, Address, Env};
 
-fn setup(env: &Env) -> (Address, Address) {
+fn setup(env: &Env) -> (Address, Address, Address) {
     let verifier = Address::generate(env);
     let admin = Address::generate(env);
+    let wverifier = Address::generate(env);
     let sac = env.register_stellar_asset_contract_v2(admin);
-    (verifier, sac.address())
+    (verifier, wverifier, sac.address())
 }
 
 #[test]
 fn constructor_wires_verifier_token_pool_empty() {
     let env = Env::default();
-    let (verifier, token) = setup(&env);
-    let id = env.register(ConfidentialPayroll, (verifier.clone(), token.clone()));
+    let (verifier, wverifier, token) = setup(&env);
+    let id = env.register(ConfidentialPayroll, (verifier.clone(), wverifier.clone(), token.clone()));
     let client = ConfidentialPayrollClient::new(&env, &id);
 
     assert_eq!(client.verifier(), Some(verifier));
@@ -34,7 +35,8 @@ fn fund_pulls_real_tokens_and_credits_pool() {
     let employer = Address::generate(&env);
     token::StellarAssetClient::new(&env, &token_addr).mint(&employer, &50_000i128);
 
-    let id = env.register(ConfidentialPayroll, (verifier, token_addr.clone()));
+    let wverifier = Address::generate(&env);
+    let id = env.register(ConfidentialPayroll, (verifier, wverifier, token_addr.clone()));
     let client = ConfidentialPayrollClient::new(&env, &id);
 
     client.fund(&employer, &20_000i128);

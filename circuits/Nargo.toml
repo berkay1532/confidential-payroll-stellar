@@ -1,6 +1,2 @@
-[package]
-name = "confidential_payroll"
-type = "bin"
-authors = [""]
-
-[dependencies]
+[workspace]
+members = ["batch", "withdraw"]

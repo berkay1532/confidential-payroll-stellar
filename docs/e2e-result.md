@@ -76,3 +76,33 @@ Contract; `pool` tracks available-to-distribute, `custody` is the actual token b
 
 Money loop so far: real USDC in → confidential distribution (salaries hidden) → tokens held
 in custody. Next increment: **withdraw** — employees claim their hidden salary as real USDC.
+
+---
+
+## Increment C — withdraw (money loop closed) (2026-06-28)
+
+Employees withdraw a revealed amount from their confidential balance, proving in ZK:
+ownership (knows sk, bal with `C2 = bal*G + sk*C1`), solvency (`0 <= w <= bal`), and a
+correctly-formed new balance ciphertext `C' = ElGamal(bal-w)`. The contract verifies the
+withdraw proof, checks the proof's old ciphertext equals the stored balance, updates the
+balance, and pays out real USDC.
+
+- Withdraw circuit: 7,164 gates, public inputs 288 bytes (9 fields: old C | w | new C').
+- Withdraw verifier: `CD7NUAGWFAJRX6ZMSTDTJ6JBZ2BQIUKHXP7WMJDKUT5SMICOYC5U37CE`
+- Full ConfidentialPayroll (batch + withdraw verifiers + USDC): `CDIN5OI4IUEECZOYAR3KWIWDVGPBJK6V4CRUW6W54OWMRGSZHUYNLVFY`
+
+| Step | Result |
+|---|---|
+| balance_of(0) after payroll | `2355ba1f…` (encrypts 4200) |
+| `withdraw(index 0, w=1000)` | ✅ proof verified, integrity check passed |
+| employee USDC | ✅ 960,000 → **961,000** (real USDC paid out) |
+| `custody()` | ✅ 20,000 → **19,000** |
+| balance_of(0) after withdraw | ✅ `1e66dd37…` — **new ciphertext** (encrypts 3200 = 4200−1000) |
+
+## Money loop COMPLETE
+`fund` (real USDC in) → `run_payroll` (confidential batch distribution, salaries hidden,
+total conserved) → `withdraw` (ZK ownership proof, real USDC out, balance homomorphically
+reduced). All verified on Stellar testnet with the BN254 host-function UltraHonk verifier.
+
+Remaining (optional polish): bind employer confidential balance + overdraft proof, auditor
+view-key disclosure (mostly client-side), frontend.
