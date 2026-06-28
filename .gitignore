@@ -1,0 +1,23 @@
+# Node / Next.js
+node_modules/
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+.env*.local
+
+# Rust / Soroban
+target/
+**/*.rs.bk
+*.wasm
+
+# Noir
+**/proofs/
+**/target/
+*.proof
+*.vk
+
+# Misc
+.DS_Store
+*.log
+.env
