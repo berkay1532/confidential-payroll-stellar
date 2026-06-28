@@ -1,0 +1,9 @@
+[package]
+name = "confidential_payroll"
+type = "bin"
+authors = [""]
+compiler_version = ">=0.34.0"
+
+[dependencies]
+# Baby Jubjub / ElGamal / Poseidon helpers are added during Gate 2 of the spike.
+# See docs/spike-plan.md
