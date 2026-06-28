@@ -1,50 +1,55 @@
-//! Confidential Payroll — batch circuit (skeleton)
+//! Confidential Payroll - batch circuit.
 //!
-//! Proves a payroll run is valid WITHOUT revealing individual amounts:
-//!   1. conservation:  sum(amounts) == employer_old_balance - employer_new_balance
-//!   2. range:         each amount ∈ [0, 2^40]   (bounds ElGamal decryption cost)
-//!   3. no overdraft:  employer_old_balance >= sum(amounts)
-//!   4. encryption:    each recipient ciphertext correctly encrypts its amount
+//! Proves a payroll run over N recipients WITHOUT revealing individual amounts:
+//!   1. range:        each amount in [0, 2^40]
+//!   2. conservation: revealed `total` == sum(amounts). The total is auditor-visible;
+//!                    individual salaries stay hidden inside the EC-ElGamal ciphertexts.
+//!   3. encryption:   each recipient ciphertext correctly encrypts its amount under pk_i
 //!
-//! Public inputs are what the Soroban verifier checks against on-chain.
-//! Private inputs (the plaintext amounts, randomness, employer balance) stay secret.
+//! Public outputs (consumed by the Soroban contract): per recipient
+//!   pk_i.x, pk_i.y, c1_i.x, c1_i.y, c2_i.x, c2_i.y   (6 fields each)
+//! followed by the revealed `total` (1 field)  =>  length 6*N + 1.
 //!
-//! NOTE: ElGamal-over-Baby-Jubjub and Poseidon helpers are wired in during
-//! Gate 2 of the spike (docs/spike-plan.md). This is the constraint scaffold.
+//! Secrets (private): amounts, randomness, recipient secret keys.
 
-global N: u32 = 8; // recipients per batch — capped for the demo (see architecture.md §8)
-global MAX_AMOUNT: Field = 0x10000000000; // 2^40
+use std::embedded_curve_ops::{EmbeddedCurveScalar, multi_scalar_mul, fixed_base_scalar_mul};
+
+global N: u32 = 4;
 
 fn main(
-    // --- public inputs ---
-    employer_old_ct: pub [Field; 2],          // ElGamal ciphertext (C1, C2) of employer balance, before
-    employer_new_ct: pub [Field; 2],          // ... after
-    recipient_cts: pub [[Field; 2]; N],        // per-recipient encrypted amounts
-    period_nonce: pub Field,                   // anti-replay binding (employer + period + action)
-    // --- private inputs ---
-    amounts: [Field; N],                       // plaintext salaries (secret)
-    employer_old_balance: Field,               // plaintext employer balance (secret)
-    randomness: [Field; N],                    // encryption randomness (secret)
-) {
-    // 1 + 3: conservation & no overdraft
+    amounts: [Field; N], // private: secret salaries
+    rs: [Field; N],      // private: per-recipient encryption randomness
+    sks: [Field; N],     // private: recipient secret keys (pk_i = sk_i * G)
+) -> pub [Field; 6 * N + 1] {
+    let mut out: [Field; 6 * N + 1] = [0; 6 * N + 1];
     let mut total: Field = 0;
+
     for i in 0..N {
-        // 2: range check — amount fits in [0, 2^40]
-        assert(amounts[i] as u64 < MAX_AMOUNT as u64);
+        // range check
+        amounts[i].assert_max_bit_size::<40>();
         total += amounts[i];
+
+        let r_s = EmbeddedCurveScalar::from_field(rs[i]);
+        let a_s = EmbeddedCurveScalar::from_field(amounts[i]);
+        let sk_s = EmbeddedCurveScalar::from_field(sks[i]);
+
+        // pk = sk*G ; C1 = r*G ; C2 = amount*G + r*pk   (EC-ElGamal)
+        let pk = fixed_base_scalar_mul(sk_s);
+        let c1 = fixed_base_scalar_mul(r_s);
+        let amount_g = fixed_base_scalar_mul(a_s);
+        let r_pk = multi_scalar_mul([pk], [r_s]);
+        let c2 = amount_g + r_pk;
+
+        let b = 6 * i;
+        out[b]     = pk.x;
+        out[b + 1] = pk.y;
+        out[b + 2] = c1.x;
+        out[b + 3] = c1.y;
+        out[b + 4] = c2.x;
+        out[b + 5] = c2.y;
     }
-    assert(employer_old_balance as u64 >= total as u64);
-    let employer_new_balance = employer_old_balance - total;
 
-    // 4: encryption correctness (placeholder — real ElGamal in Gate 2)
-    // for i in 0..N {
-    //     assert(recipient_cts[i] == elgamal_encrypt(amounts[i], recipient_pk[i], randomness[i]));
-    // }
-
-    // bind new employer ciphertext to the proven new balance (placeholder)
-    // assert(employer_new_ct == elgamal_encrypt(employer_new_balance, employer_pk, r_new));
-
-    // touch public inputs so they are constrained
-    assert(period_nonce == period_nonce);
-    let _ = (employer_old_ct, employer_new_ct, recipient_cts, employer_new_balance, randomness);
+    // reveal the total (auditor-visible), bound to the hidden amounts
+    out[6 * N] = total;
+    out
 }
