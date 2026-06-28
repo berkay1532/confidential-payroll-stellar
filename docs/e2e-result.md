@@ -56,3 +56,23 @@ Deployed (pool model): `CDZPVZTMVTXSMFOZH4GYCXISVBOI2FSJZZVK6SXGPYGJKHS452C5WYDM
 Privacy model (this increment): individual salaries hidden inside ElGamal ciphertexts;
 aggregate total revealed (auditor-visible) and conserved. Funding is mock (integer pool);
 real USDC via SAC is the next increment.
+
+---
+
+## Increment B — real USDC via SAC (2026-06-28)
+
+`fund` now pulls real tokens from the employer into the contract via the Stellar Asset
+Contract; `pool` tracks available-to-distribute, `custody` is the actual token balance held.
+
+- Test USDC SAC: `CAGB4O4Q6D4EPE3MLXA32MVSESGIA5JR2NUXGJUB3LZCEXSAJDB23WEC`
+- ConfidentialPayroll (verifier + USDC): `CDZGKDZSKRZHB7D6TRN5VTETOM4T4FVBUQBRVYYP4LEWFKD7DQF4ZQPT`
+
+| Step | Result |
+|---|---|
+| employer USDC before | 1,000,000 |
+| `fund(20000)` pulls real USDC | ✅ employer → 980,000 ; `custody()` = 20,000 |
+| `run_payroll` (total 15,050) | ✅ `pool()` 20,000 → 4,950 (committed to employees) |
+| tokens stay in custody until withdraw | ✅ `custody()` = 20,000 |
+
+Money loop so far: real USDC in → confidential distribution (salaries hidden) → tokens held
+in custody. Next increment: **withdraw** — employees claim their hidden salary as real USDC.

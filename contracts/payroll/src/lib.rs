@@ -16,7 +16,7 @@
 //! => N = (num_fields - 1) / 6 ; each stored ciphertext = c1.x|c1.y|c2.x|c2.y (128 bytes).
 
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, symbol_short, vec, Address, Bytes,
+    contract, contracterror, contractimpl, contracttype, symbol_short, token, vec, Address, Bytes,
     BytesN, Env, IntoVal, Symbol,
 };
 
@@ -26,7 +26,8 @@ const FIELD: u32 = 32; // bytes per field element
 #[derive(Clone)]
 pub enum DataKey {
     Verifier,
-    Pool,
+    Token, // SAC address of the payroll asset (e.g. USDC)
+    Pool,  // available-to-distribute (funded - distributed)
     Balance(u32), // recipient index -> stored ElGamal ciphertext (c1|c2, 128 bytes)
     UsedNonce(BytesN<32>),
 }
@@ -46,21 +47,40 @@ pub struct ConfidentialPayroll;
 
 #[contractimpl]
 impl ConfidentialPayroll {
-    /// Wire up the verifier at deploy time; pool starts empty.
-    pub fn __constructor(env: Env, verifier: Address) {
+    /// Wire up the verifier and payroll token (SAC) at deploy time; pool starts empty.
+    pub fn __constructor(env: Env, verifier: Address, token: Address) {
         env.storage().instance().set(&DataKey::Verifier, &verifier);
+        env.storage().instance().set(&DataKey::Token, &token);
         env.storage().instance().set(&DataKey::Pool, &0i128);
     }
 
-    /// Fund the payroll pool (mock funding for now; SAC USDC transfer wired next increment).
+    /// Fund the payroll pool with real tokens: pulls `amount` of the payroll asset from
+    /// `from` into the contract via the SAC, and credits the available pool.
     pub fn fund(env: Env, from: Address, amount: i128) {
         from.require_auth();
+        let token: Address = env.storage().instance().get(&DataKey::Token).unwrap();
+        token::TokenClient::new(&env, &token).transfer(
+            &from,
+            &env.current_contract_address(),
+            &amount,
+        );
         let pool: i128 = env.storage().instance().get(&DataKey::Pool).unwrap_or(0);
         env.storage().instance().set(&DataKey::Pool, &(pool + amount));
     }
 
+    /// Available-to-distribute amount (funded - distributed).
     pub fn pool(env: Env) -> i128 {
         env.storage().instance().get(&DataKey::Pool).unwrap_or(0)
+    }
+
+    /// Actual token amount held in custody by the contract.
+    pub fn custody(env: Env) -> i128 {
+        let token: Address = env.storage().instance().get(&DataKey::Token).unwrap();
+        token::TokenClient::new(&env, &token).balance(&env.current_contract_address())
+    }
+
+    pub fn token(env: Env) -> Option<Address> {
+        env.storage().instance().get(&DataKey::Token)
     }
 
     /// Run confidential payroll for a batch. `public_inputs` + `proof` come from the
