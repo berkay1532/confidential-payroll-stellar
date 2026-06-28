@@ -71,10 +71,19 @@ confidential-payroll/
 - [x] **Spike Gate 1:** Noir → Soroban verifier path proven end-to-end on testnet ✅ (see [`docs/gate1-result.md`](docs/gate1-result.md))
 - [x] Spike Gate 2/3: crypto core (ElGamal + range + commitment) verified on-chain ✅ via updated host-fn verifier `rs-soroban-ultrahonk@661db07` (see [`docs/gate2-result.md`](docs/gate2-result.md))
 - [x] Core: batch circuit + `ConfidentialPayroll` verifier-gateway working end-to-end on testnet ✅ (see [`docs/e2e-result.md`](docs/e2e-result.md))
-- [ ] MVP: employer confidential balance + SAC wrap/unwrap, withdraw flow, auditor view, demo-org onboarding
-- [ ] 10+ real users onboarded (self-serve demo-org flow)
-- [ ] Production deploy + analytics + demo video
+- [x] Money loop: real USDC `fund` → confidential `run_payroll` → `withdraw` (ZK ownership) ✅
+- [x] Frontend: Next.js dApp (employer/employee/auditor) + wallet connect + live on-chain reads ✅
+- [ ] Deploy to Vercel + demo video + analytics + 10 users
 - [ ] Mainnet vision: recurring payroll, KYC allow-list, total-proof circuit, confidential B2B settlement
+
+## Deployed (Stellar testnet)
+
+| Contract | Address |
+|---|---|
+| ConfidentialPayroll | `CDIN5OI4IUEECZOYAR3KWIWDVGPBJK6V4CRUW6W54OWMRGSZHUYNLVFY` |
+| Batch verifier | `CCNKYJVGKAXN4BDBRMU7UL54ZD4VNQOFOGZBAXXRVMDK5Q3A3VSW7QZ2` |
+| Withdraw verifier | `CD7NUAGWFAJRX6ZMSTDTJ6JBZ2BQIUKHXP7WMJDKUT5SMICOYC5U37CE` |
+| Test USDC (SAC) | `CAGB4O4Q6D4EPE3MLXA32MVSESGIA5JR2NUXGJUB3LZCEXSAJDB23WEC` |
 
 ## Getting started
 
