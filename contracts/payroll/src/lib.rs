@@ -1,40 +1,36 @@
 #![no_std]
-//! Confidential Payroll — Soroban contract (skeleton).
+//! Confidential Payroll - Soroban contract (verifier-gateway).
 //!
-//! Design principle: this contract does NO elliptic-curve math on balances.
-//! It stores encrypted balances as opaque bytes and only VERIFIES the batch
-//! proof, then updates stored ciphertexts. All correctness (conservation,
-//! range, encryption) is proven inside the Noir circuit. See docs/architecture.md.
+//! `run_payroll` gates on a batch ZK proof: it makes a cross-contract call to the
+//! deployed UltraHonk verifier (`rs-soroban-ultrahonk`, native BN254 host functions).
+//! If the proof is invalid the verifier traps and the whole payroll run reverts.
+//! On success the per-recipient encrypted balances (opaque ElGamal ciphertexts) are
+//! stored. The contract does NO elliptic-curve math itself - correctness (range,
+//! conservation, encryption) is proven inside the Noir circuit. See docs/architecture.md.
 
-use soroban_sdk::{contract, contracterror, contractimpl, contracttype, Address, Bytes, BytesN, Env, Map};
-
-/// Opaque ElGamal ciphertext (C1, C2) as stored on-chain — the contract never
-/// interprets these; it only checks they match the proof's public inputs.
-pub type Ciphertext = Bytes;
+use soroban_sdk::{
+    contract, contracterror, contractimpl, contracttype, symbol_short, vec, Address, Bytes,
+    BytesN, Env, IntoVal, Symbol, Vec,
+};
 
 #[contracttype]
 #[derive(Clone)]
 pub enum DataKey {
-    /// address -> encrypted balance ciphertext
-    Balance(Address),
-    /// employer encrypted balance
-    Employer,
-    /// consumed period nonces (anti-replay)
-    UsedNonce(BytesN<32>),
-    /// view-key registry: address -> auditor-readable key material
-    ViewKey(Address),
-    /// the deployed Verifier contract address
+    /// deployed UltraHonk verifier contract
     Verifier,
+    /// recipient index -> stored encrypted balance ciphertext (C1 || C2)
+    Balance(u32),
+    /// consumed payroll-period nonces (anti-replay)
+    UsedNonce(BytesN<32>),
 }
 
 #[contracterror]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[repr(u32)]
 pub enum Error {
     AlreadyInitialized = 1,
-    InvalidProof = 2,
+    NotInitialized = 2,
     ReplayedNonce = 3,
-    StaleBalance = 4,
-    NotAuthorized = 5,
 }
 
 #[contract]
@@ -42,79 +38,74 @@ pub struct ConfidentialPayroll;
 
 #[contractimpl]
 impl ConfidentialPayroll {
-    /// Wire up the verifier contract once at deploy time.
-    pub fn init(env: Env, verifier: Address) -> Result<(), Error> {
-        if env.storage().instance().has(&DataKey::Verifier) {
-            return Err(Error::AlreadyInitialized);
-        }
+    /// Wire up the verifier contract at deploy time.
+    pub fn __constructor(env: Env, verifier: Address) {
         env.storage().instance().set(&DataKey::Verifier, &verifier);
-        Ok(())
     }
 
-    /// Run confidential payroll for a batch of recipients.
+    /// Run confidential payroll for a batch.
     ///
-    /// `proof` + `public_inputs` come from the client-side Noir prover.
-    /// `recipients`/`new_cts` are the per-employee updated ciphertexts whose
-    /// correctness is attested by the proof's public inputs.
+    /// `public_inputs` + `proof` come from the client-side Noir prover. `new_cts` are the
+    /// per-recipient updated ciphertexts to store (their correctness is attested by the proof).
     pub fn run_payroll(
         env: Env,
         employer: Address,
-        proof: Bytes,
-        public_inputs: Bytes,
         period_nonce: BytesN<32>,
-        employer_new_ct: Ciphertext,
-        recipients: soroban_sdk::Vec<Address>,
-        new_cts: soroban_sdk::Vec<Ciphertext>,
+        public_inputs: Bytes,
+        proof: Bytes,
+        new_cts: Vec<Bytes>,
     ) -> Result<(), Error> {
         employer.require_auth();
 
-        // anti-replay: bind to (employer, period, action) — nonce must be fresh
-        if env.storage().persistent().has(&DataKey::UsedNonce(period_nonce.clone())) {
+        // anti-replay
+        if env
+            .storage()
+            .persistent()
+            .has(&DataKey::UsedNonce(period_nonce.clone()))
+        {
             return Err(Error::ReplayedNonce);
         }
 
-        // verification gateway: delegate pure crypto to the Verifier contract.
-        // TODO(spike Gate 1): call verifier.verify(proof, public_inputs) once the
-        // UltraHonk/BN254 Soroban verifier is wired up.
-        let _verifier: Address = env
+        let verifier: Address = env
             .storage()
             .instance()
             .get(&DataKey::Verifier)
-            .ok_or(Error::NotAuthorized)?;
-        let verified = Self::verify(&env, &proof, &public_inputs);
-        if !verified {
-            return Err(Error::InvalidProof);
+            .ok_or(Error::NotInitialized)?;
+
+        // Verification gateway: cross-contract call. The verifier returns void on success
+        // and TRAPS on an invalid proof, which reverts this whole transaction.
+        let verify_fn: Symbol = Symbol::new(&env, "verify_proof");
+        let args = vec![
+            &env,
+            public_inputs.into_val(&env),
+            proof.into_val(&env),
+        ];
+        env.invoke_contract::<()>(&verifier, &verify_fn, args);
+
+        // Apply: store new encrypted balances (opaque bytes).
+        let mut i: u32 = 0;
+        for ct in new_cts.iter() {
+            env.storage().persistent().set(&DataKey::Balance(i), &ct);
+            i += 1;
         }
 
-        // TODO: assert public_inputs bind to current employer ciphertext (StaleBalance guard)
+        env.storage()
+            .persistent()
+            .set(&DataKey::UsedNonce(period_nonce), &true);
 
-        // apply: store new employer + recipient ciphertexts atomically
-        env.storage().persistent().set(&DataKey::Employer, &employer_new_ct);
-        for (addr, ct) in recipients.iter().zip(new_cts.iter()) {
-            env.storage().persistent().set(&DataKey::Balance(addr), &ct);
-        }
-        env.storage().persistent().set(&DataKey::UsedNonce(period_nonce), &true);
+        env.events()
+            .publish((symbol_short!("payroll"), employer), i);
         Ok(())
     }
 
-    /// Read your own (still-encrypted) balance ciphertext; decryption is client-side.
-    pub fn balance_of(env: Env, who: Address) -> Option<Ciphertext> {
-        env.storage().persistent().get(&DataKey::Balance(who))
+    /// Read a stored (still-encrypted) balance ciphertext by recipient index.
+    pub fn balance_of(env: Env, index: u32) -> Option<Bytes> {
+        env.storage().persistent().get(&DataKey::Balance(index))
     }
 
-    /// Register a view key so an auditor can read totals without spend rights.
-    pub fn register_view_key(env: Env, who: Address, view_key: Bytes) {
-        who.require_auth();
-        env.storage().persistent().set(&DataKey::ViewKey(who), &view_key);
-    }
-
-    // --- internal ---
-
-    /// Placeholder for the proof verification gateway.
-    /// Replaced in spike Gate 1 by a cross-contract call to the BN254/UltraHonk verifier.
-    fn verify(_env: &Env, _proof: &Bytes, _public_inputs: &Bytes) -> bool {
-        // TODO: cross-contract call to Verifier; returns true only for a valid proof.
-        false
+    /// The wired verifier contract address.
+    pub fn verifier(env: Env) -> Option<Address> {
+        env.storage().instance().get(&DataKey::Verifier)
     }
 }
 

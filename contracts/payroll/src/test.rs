@@ -3,21 +3,16 @@ use super::*;
 use soroban_sdk::{testutils::Address as _, Address, Env};
 
 #[test]
-fn init_sets_verifier_once() {
+fn constructor_wires_verifier_and_balance_starts_empty() {
     let env = Env::default();
-    let contract_id = env.register(ConfidentialPayroll, ());
+    let verifier = Address::generate(&env);
+    let contract_id = env.register(ConfidentialPayroll, (verifier.clone(),));
     let client = ConfidentialPayrollClient::new(&env, &contract_id);
 
-    let verifier = Address::generate(&env);
-    client.init(&verifier);
-
-    // second init must fail
-    let res = client.try_init(&verifier);
-    assert!(res.is_err());
+    assert_eq!(client.verifier(), Some(verifier));
+    assert_eq!(client.balance_of(&0u32), None);
 }
 
-// TODO(spike Gate 1+): once the verifier is wired up, add:
-//   - run_payroll happy path with a real proof
-//   - replayed-nonce rejection
-//   - invalid-proof rejection
-//   - overdraft attempt rejection (proven false in-circuit)
+// End-to-end run_payroll (cross-contract call into the real BN254 host-function verifier)
+// is exercised on testnet via scripts/e2e — see docs/batch-circuit-result.md. testutils does
+// not register the external verifier wasm here.

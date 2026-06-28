@@ -70,7 +70,8 @@ confidential-payroll/
 
 - [x] **Spike Gate 1:** Noir → Soroban verifier path proven end-to-end on testnet ✅ (see [`docs/gate1-result.md`](docs/gate1-result.md))
 - [x] Spike Gate 2/3: crypto core (ElGamal + range + commitment) verified on-chain ✅ via updated host-fn verifier `rs-soroban-ultrahonk@661db07` (see [`docs/gate2-result.md`](docs/gate2-result.md))
-- [ ] MVP: single demo-org, fixed N employees, batch confidential payroll, withdraw, auditor view
+- [x] Core: batch circuit + `ConfidentialPayroll` verifier-gateway working end-to-end on testnet ✅ (see [`docs/e2e-result.md`](docs/e2e-result.md))
+- [ ] MVP: employer confidential balance + SAC wrap/unwrap, withdraw flow, auditor view, demo-org onboarding
 - [ ] 10+ real users onboarded (self-serve demo-org flow)
 - [ ] Production deploy + analytics + demo video
 - [ ] Mainnet vision: recurring payroll, KYC allow-list, total-proof circuit, confidential B2B settlement
