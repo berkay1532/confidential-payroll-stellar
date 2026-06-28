@@ -21,3 +21,7 @@ target/
 .DS_Store
 *.log
 .env
+
+# Spike: cloned upstream verifier (documented in docs/gate1-result.md, not vendored)
+spike/ultrahonk_soroban_contract/
+spike/**/target/

@@ -1,0 +1,6 @@
+[package]
+name = "gate1_trivial"
+type = "bin"
+authors = [""]
+
+[dependencies]
