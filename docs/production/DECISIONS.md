@@ -43,3 +43,15 @@ design system, and *also* publish a component gallery to the Obscura design proj
 - Tailwind v4 `@theme` tokens (canvas/surface/line/muted/violet/mint). Build passes; headless
   screenshots confirm desktop + mobile render correctly with live on-chain data.
 - Kept all functionality identical (reads, fund/run_payroll/withdraw, client-side decrypt).
+
+### Item 1: viewing key ≠ spending key (circuit done + verified)
+- Implemented `circuits/withdraw_v2`: separates VIEWING key (decrypts, shareable with auditor)
+  from SPENDING key (authorizes withdrawal). Balance encrypted under pk_view; withdrawal bound to
+  pk_spend = sk_spend·G.
+- Verified natively (7,799 gates, proof verifies) AND negatively: an attacker with only the
+  viewing key fails the authorization constraint → can read but cannot spend. Security property holds.
+- Full integration (contract stores pk_spend, batch encrypts under pk_view, v2 verifier deploy)
+  is specified in docs/production/01-key-separation.md but staged to avoid destabilising the live
+  demo. Decision: ship the verified circuit + design now; wire into a v2 contract as a deliberate
+  follow-up rather than risk the working testnet stack mid-run.
+- Also designed item 1b (hidden employer total) — documented, follow-up.
