@@ -5,6 +5,7 @@ import { NETWORK, CONTRACTS, DEMO_RECIPIENTS, DEMO_VIEWING_KEYS } from "@/lib/co
 import * as payroll from "@/lib/contract";
 import { decryptBalance } from "@/lib/decrypt";
 import { connectWallet, signTx } from "@/lib/wallet";
+import { track } from "@/lib/analytics";
 
 type Tab = "employer" | "employee" | "auditor";
 
@@ -59,6 +60,7 @@ export default function Home() {
     try {
       const a = await connectWallet();
       setAddress(a);
+      track("wallet_connected");
       setStatus({ msg: `Connected ${short(a)}`, kind: "ok" });
     } catch {
       setStatus({ msg: "Wallet connection cancelled", kind: "err" });
@@ -80,6 +82,7 @@ export default function Home() {
     setStatus({ msg: "Funding pool with USDC…", kind: "busy" });
     try {
       const h = await payroll.fund(20000n, address, sign);
+      track("fund", { amount: 20000 });
       setStatus({ msg: "Pool funded with 20,000 USDC", href: NETWORK.explorerTx(h), kind: "ok" });
       refresh();
     } catch (e) {
@@ -97,6 +100,7 @@ export default function Home() {
         loadBin("batch_proof.bin"),
       ]);
       const h = await payroll.runPayroll(nonce, pi, proof, address, sign);
+      track("run_payroll");
       setStatus({ msg: "Confidential payroll run — salaries hidden on-chain", href: NETWORK.explorerTx(h), kind: "ok" });
       refresh();
     } catch (e) {
@@ -113,6 +117,7 @@ export default function Home() {
         loadBin("withdraw_proof.bin"),
       ]);
       const h = await payroll.withdraw(0, pi, proof, address, sign);
+      track("withdraw", { amount: 1000 });
       setSalaries((s) => ({ ...s, 0: s[0] - 1000 }));
       setStatus({ msg: "Withdrew 1,000 USDC — balance stays private", href: NETWORK.explorerTx(h), kind: "ok" });
       refresh();
@@ -308,6 +313,7 @@ function Auditor({ cts }: { cts: (string | null)[] }) {
 
   function disclose() {
     setBusy(true);
+    track("auditor_decrypt");
     // defer so the spinner paints before the (bounded) discrete-log search runs
     setTimeout(() => {
       const out: Record<number, number | null> = {};
