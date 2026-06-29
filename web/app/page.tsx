@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { NETWORK, CONTRACTS, DEMO_RECIPIENTS } from "@/lib/config";
+import { NETWORK, CONTRACTS, DEMO_RECIPIENTS, DEMO_VIEWING_KEYS } from "@/lib/config";
 import * as payroll from "@/lib/contract";
+import { decryptBalance } from "@/lib/decrypt";
 import { connectWallet, signTx } from "@/lib/wallet";
 
 type Tab = "employer" | "employee" | "auditor";
@@ -302,19 +303,67 @@ function Employee({
 }
 
 function Auditor({ cts }: { cts: (string | null)[] }) {
+  const [decrypted, setDecrypted] = useState<Record<number, number | null> | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  function disclose() {
+    setBusy(true);
+    // defer so the spinner paints before the (bounded) discrete-log search runs
+    setTimeout(() => {
+      const out: Record<number, number | null> = {};
+      for (const r of DEMO_RECIPIENTS) {
+        const ct = cts[r.index];
+        out[r.index] = ct ? decryptBalance(ct, DEMO_VIEWING_KEYS[r.index]) : null;
+      }
+      setDecrypted(out);
+      setBusy(false);
+    }, 30);
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
         <div className="text-xs text-neutral-500">Provable aggregate (auditor-visible)</div>
         <div className="mt-1 text-2xl font-semibold tabular-nums">{DEMO_TOTAL.toLocaleString()} USDC</div>
         <p className="mt-2 text-xs text-neutral-500">
-          The total payroll is revealed and conserved against the funded pool. Individual salaries below stay encrypted.
+          The total payroll is revealed and conserved against the funded pool — without exposing any individual salary.
         </p>
       </div>
+
       <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-        <div className="mb-2 text-sm font-medium">Per-employee — encrypted, not readable</div>
+        <div className="mb-1 flex items-center justify-between gap-3">
+          <div className="text-sm font-medium">Per-employee balances</div>
+          <button
+            onClick={disclose}
+            disabled={busy}
+            className="rounded-lg bg-neutral-100 px-3 py-1.5 text-xs font-medium text-neutral-900 hover:bg-white disabled:opacity-50"
+          >
+            {busy ? "Decrypting…" : decrypted ? "Re-decrypt" : "Decrypt with viewing keys"}
+          </button>
+        </div>
+        <p className="mb-2 text-xs text-neutral-500">
+          {decrypted
+            ? "Auditor decrypted each balance client-side using the employees' viewing keys. The public still sees only ciphertext."
+            : "Encrypted on-chain. An auditor holding the viewing keys can selectively decrypt these — try it."}
+        </p>
         {DEMO_RECIPIENTS.map((r) => (
-          <CipherRow key={r.index} name={r.name} note={r.note} ct={cts[r.index]} />
+          <div
+            key={r.index}
+            className="flex items-center justify-between gap-3 border-t border-neutral-800 py-2 text-sm"
+          >
+            <div>
+              <span className="font-medium">{r.name}</span> <span className="text-neutral-500">· {r.note}</span>
+            </div>
+            {decrypted ? (
+              <span className="font-semibold tabular-nums text-emerald-300">
+                {decrypted[r.index] == null ? "—" : `${decrypted[r.index]!.toLocaleString()} USDC`}
+              </span>
+            ) : (
+              <code className="truncate font-mono text-xs text-neutral-500">
+                {cts[r.index] ? `${cts[r.index]!.slice(0, 16)}…` : "—"}
+              </code>
+            )}
+          </div>
         ))}
       </div>
     </div>

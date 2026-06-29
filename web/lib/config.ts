@@ -24,3 +24,12 @@ export const DEMO_RECIPIENTS = [
   { index: 2, name: "Chen", note: "ops" },
   { index: 3, name: "Diego", note: "growth" },
 ] as const;
+
+// Demo viewing keys (per-employee). In this MVP the viewing key equals the spending key;
+// an auditor given these can decrypt each employee's on-chain balance (selective disclosure).
+export const DEMO_VIEWING_KEYS: Record<number, bigint> = {
+  0: 55555555555555555555n,
+  1: 66666666666666666666n,
+  2: 77777777777777777777n,
+  3: 88888888888888888888n,
+};
