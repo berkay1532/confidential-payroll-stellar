@@ -39,11 +39,15 @@ Show the landing page tagline.
 > without revealing the balance. The contract verifies the proof and pays real USDC."
 - Sign. Show the success toast + **view tx ↗**. Her view drops to 3,200; custody drops by 1,000.
 
-## 6. Auditor view — compliance (25s)
+## 6. Auditor view — compliance + selective disclosure (35s)
 - Tab: **Auditor**.
 - Show the **provable total** (15,050 USDC), conserved against the pool.
-> "An auditor sees the aggregate is correct and conserved — without ever seeing a single
-> individual salary. Privacy and compliance, together."
+> "An auditor sees the aggregate is correct and conserved — without seeing a single salary."
+- Click **Decrypt with viewing keys**. The per-employee rows flip from ciphertext to real amounts.
+> "Now, given the employees' viewing keys, the auditor decrypts each balance client-side — live,
+> from the real on-chain ciphertext. The public still sees only gibberish. Privacy and compliance,
+> together."
+- (Note: in this MVP the viewing key equals the spending key; production separates them.)
 
 ## 7. Close (15s)
 > "Confidential payroll on Stellar. Real USDC in, salaries hidden on-chain, ZK ownership to cash
