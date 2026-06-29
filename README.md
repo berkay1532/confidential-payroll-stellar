@@ -86,6 +86,16 @@ confidential-payroll/
 | Withdraw verifier | `CD7NUAGWFAJRX6ZMSTDTJ6JBZ2BQIUKHXP7WMJDKUT5SMICOYC5U37CE` |
 | Test USDC (SAC) | `CAGB4O4Q6D4EPE3MLXA32MVSESGIA5JR2NUXGJUB3LZCEXSAJDB23WEC` |
 
+## Screenshots
+
+The privacy story in two frames — everyone sees ciphertext; only keys reveal amounts.
+
+| Employer — encrypted on-chain ledger | Auditor — decrypted with viewing keys |
+|---|---|
+| ![Employer](docs/screenshots/desktop-employer.png) | ![Auditor](docs/screenshots/desktop-auditor-decrypted.png) |
+
+Mobile-responsive: ![Mobile employee](docs/screenshots/mobile-employee.png)
+
 ## Getting started
 
 > Prerequisites: Node 20+, Rust + `cargo`, Stellar CLI 26+, **Noir (`noirup`) + BN254/Soroban backend** (not yet installed in this environment).
