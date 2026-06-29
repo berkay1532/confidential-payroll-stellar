@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { NETWORK, CONTRACTS, DEMO_RECIPIENTS, DEMO_VIEWING_KEYS } from "@/lib/config";
 import * as payroll from "@/lib/contract";
 import { decryptBalance } from "@/lib/decrypt";
@@ -9,9 +9,6 @@ import { track } from "@/lib/analytics";
 
 type Tab = "employer" | "employee" | "auditor";
 
-// Demo-only off-chain metadata: the cleartext salaries the employer/employee keep locally.
-// The chain only ever stores the ciphertext. After a 1000 withdraw, Ada (idx 0) -> 3200.
-const DEMO_SALARY: Record<number, number> = { 0: 4200, 1: 3100, 2: 5000, 3: 2750 };
 const DEMO_TOTAL = 15050;
 
 async function loadBin(name: string): Promise<Uint8Array> {
@@ -31,7 +28,6 @@ export default function Home() {
   const [cts, setCts] = useState<(string | null)[]>([]);
   const [, setUsdc] = useState<bigint | null>(null);
   const [status, setStatus] = useState<{ msg: string; href?: string; kind: "" | "ok" | "err" | "busy" }>({ msg: "", kind: "" });
-  const [salaries, setSalaries] = useState(DEMO_SALARY);
 
   const refresh = useCallback(async () => {
     try {
@@ -118,7 +114,6 @@ export default function Home() {
       ]);
       const h = await payroll.withdraw(0, pi, proof, address, sign);
       track("withdraw", { amount: 1000 });
-      setSalaries((s) => ({ ...s, 0: s[0] - 1000 }));
       setStatus({ msg: "Withdrew 1,000 USDC — balance stays private", href: NETWORK.explorerTx(h), kind: "ok" });
       refresh();
     } catch (e) {
@@ -185,7 +180,7 @@ export default function Home() {
         {tab === "employer" && (
           <Employer pool={pool} custody={custody} cts={cts} onFund={doFund} onRun={doRunPayroll} />
         )}
-        {tab === "employee" && <Employee cts={cts} salaries={salaries} onWithdraw={doWithdraw} />}
+        {tab === "employee" && <Employee cts={cts} onWithdraw={doWithdraw} />}
         {tab === "auditor" && <Auditor cts={cts} />}
       </main>
 
@@ -271,16 +266,13 @@ function Employer({
   );
 }
 
-function Employee({
-  cts,
-  salaries,
-  onWithdraw,
-}: {
-  cts: (string | null)[];
-  salaries: Record<number, number>;
-  onWithdraw: () => void;
-}) {
+function Employee({ cts, onWithdraw }: { cts: (string | null)[]; onWithdraw: () => void }) {
   const idx = 0; // demo: you are Ada
+  // Decrypt your own live on-chain balance with your viewing key (bounded DLOG).
+  const decryptedSelf = useMemo(
+    () => (cts[idx] ? decryptBalance(cts[idx]!, DEMO_VIEWING_KEYS[idx]) : null),
+    [cts],
+  );
   return (
     <div className="space-y-6">
       <p className="text-sm text-neutral-400">
@@ -296,7 +288,7 @@ function Employee({
         <div className="rounded-xl border border-emerald-800 bg-emerald-500/5 p-4">
           <div className="text-xs text-emerald-400">Your view (decrypted with your key)</div>
           <div className="mt-2 text-2xl font-semibold tabular-nums text-emerald-300">
-            {salaries[idx].toLocaleString()} USDC
+            {decryptedSelf == null ? "—" : `${decryptedSelf.toLocaleString()} USDC`}
           </div>
         </div>
       </div>
