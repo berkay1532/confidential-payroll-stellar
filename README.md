@@ -73,7 +73,8 @@ confidential-payroll/
 - [x] Core: batch circuit + `ConfidentialPayroll` verifier-gateway working end-to-end on testnet ✅ (see [`docs/e2e-result.md`](docs/e2e-result.md))
 - [x] Money loop: real USDC `fund` → confidential `run_payroll` → `withdraw` (ZK ownership) ✅
 - [x] Frontend: Next.js dApp (employer/employee/auditor) + wallet connect + live on-chain reads ✅
-- [ ] Deploy to Vercel + demo video + analytics + 10 users
+- [ ] Polish demo (explorer links, demo script) + analytics + feedback
+- [ ] Deploy to Vercel (final step)
 - [ ] Mainnet vision: recurring payroll, KYC allow-list, total-proof circuit, confidential B2B settlement
 
 ## Deployed (Stellar testnet)

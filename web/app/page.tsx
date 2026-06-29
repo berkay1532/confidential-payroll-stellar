@@ -208,7 +208,19 @@ function CipherRow({ name, note, ct }: { name: string; note: string; ct: string 
       <div>
         <span className="font-medium">{name}</span> <span className="text-neutral-500">· {note}</span>
       </div>
-      <code className="truncate font-mono text-xs text-neutral-500">{ct ? `${ct.slice(0, 16)}…` : "—"}</code>
+      {ct ? (
+        <a
+          href={NETWORK.explorerContract(CONTRACTS.payroll)}
+          target="_blank"
+          rel="noreferrer"
+          title="Verify this encrypted entry on-chain"
+          className="truncate font-mono text-xs text-neutral-500 hover:text-emerald-400"
+        >
+          {ct.slice(0, 16)}… ↗
+        </a>
+      ) : (
+        <code className="font-mono text-xs text-neutral-600">—</code>
+      )}
     </div>
   );
 }
