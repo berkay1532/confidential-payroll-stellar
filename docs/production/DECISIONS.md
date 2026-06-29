@@ -63,3 +63,8 @@ design system, and *also* publish a component gallery to the Obscura design proj
 - Decision: prove feasibility now (done, definitive), document the integration path (Web Worker +
   COOP/COEP headers), but keep bb.js WASM out of the live demo bundle this run — it's a deliberate
   testable integration step, and I can't browser-verify the full WASM/worker wiring headlessly.
+
+### Contract tests (#12, done)
+- Added 4 Soroban unit/integration tests with a MockVerifier: conservation (pool debited by the
+  revealed total), integrity (stored ciphertexts equal the public-input slices), replay-nonce
+  rejection, insufficient-pool guard, and invalid-proof revert (cross-call trap). All pass.
