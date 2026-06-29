@@ -1,8 +1,16 @@
-# 🔐 Confidential Payroll on Stellar
+# ◐ Obscura — Confidential Payroll on Stellar
 
-> Pay your team in stablecoins — **salaries stay private on-chain**, while auditors can still **mathematically verify the totals**. Privacy and compliance, for payroll.
+> **Salaries private. Totals provable.** Pay your team in stablecoins — individual salaries stay
+> encrypted on-chain, while auditors verify the aggregate in zero-knowledge.
 
-Built for **Stellar Hacks: Real-World ZK**. Confidential payroll is the missing privacy layer on Stellar's real-world money rails: the chain is transparent, so today every salary paid in on-chain USDC is public to everyone. We hide individual amounts with zero-knowledge proofs while keeping the system auditable.
+Built for **Stellar Hacks: Real-World ZK**. Obscura is the missing privacy layer on Stellar's
+real-world money rails: the chain is transparent, so today every salary paid in on-chain USDC is
+public to everyone. We hide individual amounts with zero-knowledge proofs while keeping the system
+auditable.
+
+> 🚀 **Toward production:** the path from this MVP to a production product — with the two
+> highest-leverage items (viewing≠spending keys, client-side proving) already *proven* — is in
+> [`docs/production/`](docs/production/README.md).
 
 ---
 
@@ -88,13 +96,13 @@ confidential-payroll/
 
 ## Screenshots
 
+![Obscura landing](docs/screenshots/obscura-landing.png)
+
 The privacy story in two frames — everyone sees ciphertext; only keys reveal amounts.
 
-| Employer — encrypted on-chain ledger | Auditor — decrypted with viewing keys |
+| Auditor — decrypted with viewing keys | Mobile |
 |---|---|
-| ![Employer](docs/screenshots/desktop-employer.png) | ![Auditor](docs/screenshots/desktop-auditor-decrypted.png) |
-
-Mobile-responsive: ![Mobile employee](docs/screenshots/mobile-employee.png)
+| ![Auditor](docs/screenshots/obscura-auditor.png) | ![Mobile](docs/screenshots/obscura-mobile.png) |
 
 ## Getting started
 
