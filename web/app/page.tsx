@@ -26,7 +26,6 @@ export default function Home() {
   const [pool, setPool] = useState<bigint | null>(null);
   const [custody, setCustody] = useState<bigint | null>(null);
   const [cts, setCts] = useState<(string | null)[]>([]);
-  const [, setUsdc] = useState<bigint | null>(null);
   const [status, setStatus] = useState<{ msg: string; href?: string; kind: "" | "ok" | "err" | "busy" }>({ msg: "", kind: "" });
 
   const refresh = useCallback(async () => {
@@ -42,11 +41,10 @@ export default function Home() {
       setPool(p);
       setCustody(c);
       setCts([b0, b1, b2, b3]);
-      if (address) setUsdc(await payroll.getUsdcBalance(address));
     } catch (e) {
       console.error(e);
     }
-  }, [address]);
+  }, []);
 
   useEffect(() => {
     refresh();
