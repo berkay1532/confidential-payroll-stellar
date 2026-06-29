@@ -1,2 +1,2 @@
 [workspace]
-members = ["batch", "withdraw", "withdraw_v2"]
+members = ["batch", "withdraw", "withdraw_v2", "batch_v2"]

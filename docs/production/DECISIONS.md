@@ -68,3 +68,10 @@ design system, and *also* publish a component gallery to the Obscura design proj
 - Added 4 Soroban unit/integration tests with a MockVerifier: conservation (pool debited by the
   revealed total), integrity (stored ciphertexts equal the public-input slices), replay-nonce
   rejection, insufficient-pool guard, and invalid-proof revert (cross-call trap). All pass.
+
+### Item 1 GO-LIVE: v2 contract deployed (viewing ≠ spending, on testnet)
+- Built batch_v2 (encrypt under pk_view, publish pk_spend) + contract v2 (stores Owner=pk_spend,
+  withdraw checks owner match + sk_spend proof). Deployed all three contracts; verified e2e:
+  fund → run_payroll → withdraw (1,000 USDC out) → auditor decrypts with viewing keys.
+- Switched the frontend to the v2 stack + viewing keys + v2 demo proofs. Contract tests updated for
+  the v2 layout (4/4 pass). The old v1 stack remains deployed but the app now points at v2.

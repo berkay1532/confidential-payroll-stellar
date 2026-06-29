@@ -13,8 +13,8 @@ this push and what remains. Live demo is on Stellar testnet; full money loop wor
 | Analytics + feedback | Plausible + in-app widget |
 
 ## 🔴 Critical path to production (remaining)
-1. **Wire item 1 into a v2 contract** — store `pk_spend` per recipient, batch encrypts under
-   `pk_view`, deploy a v2 withdraw verifier. (Circuit + design done.)
+1. ~~Wire item 1 into a v2 contract~~ ✅ **DONE & LIVE** — v2 stack deployed; viewing≠spending
+   verified end-to-end on testnet (see `01-key-separation.md`).
 2. **Hide the employer total** (item 1b) — encrypt the pool balance; conservation proven
    in-circuit. (Designed.)
 3. **Wire item 2 into the app** — bb.js WASM in a Web Worker + COOP/COEP headers; prove on-device

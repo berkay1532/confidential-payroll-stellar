@@ -9,10 +9,11 @@ export const NETWORK = {
 } as const;
 
 export const CONTRACTS = {
-  payroll: "CDIN5OI4IUEECZOYAR3KWIWDVGPBJK6V4CRUW6W54OWMRGSZHUYNLVFY",
+  // v2 stack — viewing key ≠ spending key (production-grade key separation)
+  payroll: "CD2DNAMJYMYTHUZPIBHFPCK24YOQGQSKLL2UR3TADL3QEQJHISMECY5I",
   usdc: "CAGB4O4Q6D4EPE3MLXA32MVSESGIA5JR2NUXGJUB3LZCEXSAJDB23WEC",
-  batchVerifier: "CCNKYJVGKAXN4BDBRMU7UL54ZD4VNQOFOGZBAXXRVMDK5Q3A3VSW7QZ2",
-  withdrawVerifier: "CD7NUAGWFAJRX6ZMSTDTJ6JBZ2BQIUKHXP7WMJDKUT5SMICOYC5U37CE",
+  batchVerifier: "CCCACJAGTRBUOXALXJFQYOKJ7QRVULZIVMIY46YTRGY57ZCAFILSSHNV",
+  withdrawVerifier: "CAQHGJGZQHO5XDJ5V3TVTTZFPFXCDH6WD3KMLBONNM7E46QJRP2Y4RCU",
 } as const;
 
 // Demo recipients of the sample batch payroll (amounts hidden on-chain).
@@ -25,11 +26,12 @@ export const DEMO_RECIPIENTS = [
   { index: 3, name: "Diego", note: "growth" },
 ] as const;
 
-// Demo viewing keys (per-employee). In this MVP the viewing key equals the spending key;
-// an auditor given these can decrypt each employee's on-chain balance (selective disclosure).
+// Demo VIEWING keys (per-employee) — v2: distinct from the spending keys. Balances are encrypted
+// under pk_view = vk·G; an auditor given a vk can decrypt that employee's balance (read-only) but
+// cannot withdraw (that needs the separate spending key). Spending keys are never in the client.
 export const DEMO_VIEWING_KEYS: Record<number, bigint> = {
-  0: 55555555555555555555n,
-  1: 66666666666666666666n,
-  2: 77777777777777777777n,
-  3: 88888888888888888888n,
+  0: 11111111111111111111n,
+  1: 22222222222222222222n,
+  2: 33333333333333333333n,
+  3: 44444444444444444444n,
 };

@@ -48,3 +48,18 @@ Encrypt the employer pool balance under `pk_view_emp`; `run_payroll` proves
 `Σ amounts = empBal_old − empBal_new` and `empBal_old ≥ Σ` entirely in-circuit, so the total is
 no longer revealed. The public integer pool is replaced by an encrypted balance; conservation is
 enforced by the proof. (Funding/withdrawal boundaries with public USDC remain public — inherent.)
+
+## ✅ v2 is LIVE on testnet (2026-06-30)
+The full key-separated stack is deployed and verified end-to-end:
+
+| Contract | Address |
+|---|---|
+| ConfidentialPayroll **v2** | `CD2DNAMJYMYTHUZPIBHFPCK24YOQGQSKLL2UR3TADL3QEQJHISMECY5I` |
+| batch_v2 verifier | `CCCACJAGTRBUOXALXJFQYOKJ7QRVULZIVMIY46YTRGY57ZCAFILSSHNV` |
+| withdraw_v2 verifier | `CAQHGJGZQHO5XDJ5V3TVTTZFPFXCDH6WD3KMLBONNM7E46QJRP2Y4RCU` |
+
+- `run_payroll` (batch_v2) stores ciphertext (under pk_view) **+ owner pk_spend** per recipient.
+- `withdraw` (withdraw_v2) checks the proof's `pk_spend` matches the stored owner **and** verifies
+  knowledge of `sk_spend` — paid out 1,000 USDC, balance homomorphically reduced to 3,200.
+- The frontend now decrypts with **viewing keys** (`vk`) that cannot spend; the auditor screenshot
+  shows live balances (3,200 / 3,100 / 5,000 / 2,750) decrypted with viewing keys only.

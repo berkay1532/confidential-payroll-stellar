@@ -21,14 +21,19 @@ impl MockVerifier {
 
 const FIELD: usize = 32;
 
-/// Build a 4-recipient batch `public_inputs` blob (25 fields, 800 bytes): 6 fields per recipient
-/// + total. Recipient i's ciphertext is byte `(i+1)` repeated, so we can assert storage.
+/// Build a 4-recipient batch `public_inputs` blob (25 fields, 800 bytes), v2 layout: per recipient
+/// — ciphertext (fields 6i..6i+4) tagged `(i+1)`, pk_spend (fields 6i+4..6i+6) tagged `(i+101)` —
+/// then total. Lets us assert both Balance and Owner storage.
 fn batch_public_inputs(env: &Env, total: u64) -> Bytes {
     let mut buf = [0u8; 800];
     for i in 0..4usize {
-        let start = (6 * i + 2) * FIELD; // skip pk.x, pk.y
-        for b in buf[start..start + 4 * FIELD].iter_mut() {
+        let ct = (6 * i) * FIELD; // ciphertext: fields 6i..6i+4 (128 bytes)
+        for b in buf[ct..ct + 4 * FIELD].iter_mut() {
             *b = (i + 1) as u8;
+        }
+        let owner = (6 * i + 4) * FIELD; // pk_spend: fields 6i+4..6i+6 (64 bytes)
+        for b in buf[owner..owner + 2 * FIELD].iter_mut() {
+            *b = (i + 101) as u8;
         }
     }
     let off = (6 * 4) * FIELD + FIELD - 8; // total field, low 8 bytes
@@ -69,11 +74,11 @@ fn fund_then_payroll_conserves_and_stores() {
 
     // conservation: pool debited by the revealed total
     assert_eq!(c.pool(), 20_000 - 15_050);
-    // integrity: stored ciphertext equals the public-input slice (recipient 0 tagged with 1)
-    let b0 = c.balance_of(&0u32).unwrap();
-    assert_eq!(b0, Bytes::from_slice(&env, &[1u8; 128]));
-    let b3 = c.balance_of(&3u32).unwrap();
-    assert_eq!(b3, Bytes::from_slice(&env, &[4u8; 128]));
+    // integrity: stored ciphertext + owner equal the public-input slices
+    assert_eq!(c.balance_of(&0u32).unwrap(), Bytes::from_slice(&env, &[1u8; 128]));
+    assert_eq!(c.owner_of(&0u32).unwrap(), Bytes::from_slice(&env, &[101u8; 64]));
+    assert_eq!(c.balance_of(&3u32).unwrap(), Bytes::from_slice(&env, &[4u8; 128]));
+    assert_eq!(c.owner_of(&3u32).unwrap(), Bytes::from_slice(&env, &[104u8; 64]));
 }
 
 #[test]
