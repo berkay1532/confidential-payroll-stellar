@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
+/* Obscura design tokens */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #08080b;
+  --foreground: #ededf2;
 }
 
 @theme inline {
@@ -10,17 +11,35 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* canvas + surfaces */
+  --color-canvas: #08080b;
+  --color-surface: #0f0f14;
+  --color-surface-2: #16161d;
+  --color-line: #23232d;
+  --color-muted: #8b8b97;
+
+  /* brand */
+  --color-violet: #7c6cf6;
+  --color-violet-soft: #9c90f8;
+  /* the "revealed" / decrypted accent — the color flip is the privacy story */
+  --color-mint: #5eead4;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* subtle radial glow behind the hero */
+.obscura-glow {
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(124, 108, 246, 0.16), transparent 70%),
+    radial-gradient(40% 40% at 80% 10%, rgba(94, 234, 212, 0.06), transparent 70%);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
 }

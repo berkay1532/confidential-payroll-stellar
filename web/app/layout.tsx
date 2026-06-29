@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Confidential Payroll on Stellar",
+  title: "Obscura — Confidential Payroll on Stellar",
   description:
-    "Pay your team in stablecoins with individual salaries private on-chain and totals auditable — ZK-verified on Stellar.",
+    "Salaries private. Totals provable. Pay your team in stablecoins with individual salaries encrypted on-chain and aggregates auditable in zero-knowledge.",
 };
 
 export default function RootLayout({
