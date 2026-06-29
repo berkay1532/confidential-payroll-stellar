@@ -55,3 +55,11 @@ design system, and *also* publish a component gallery to the Obscura design proj
   demo. Decision: ship the verified circuit + design now; wire into a v2 contract as a deliberate
   follow-up rather than risk the working testnet stack mid-run.
 - Also designed item 1b (hidden employer total) — documented, follow-up.
+
+### Item 2: client-side proving (feasibility PROVEN)
+- Spiked noir_js@1.0.0-beta.9 + bb.js@0.87.0 (keccak oracle) in Node: generated a batch proof in
+  ~0.9s, identical format to the CLI proof, and it **verifies on-chain** against the deployed
+  verifier. Pure JS/WASM → works in-browser.
+- Decision: prove feasibility now (done, definitive), document the integration path (Web Worker +
+  COOP/COEP headers), but keep bb.js WASM out of the live demo bundle this run — it's a deliberate
+  testable integration step, and I can't browser-verify the full WASM/worker wiring headlessly.
