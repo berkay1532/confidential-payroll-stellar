@@ -44,3 +44,11 @@ this is pure JS/WASM, it runs identically in the browser.
 
 Kept out of the live demo bundle for now to avoid destabilising the working app (bb.js WASM +
 COOP/COEP headers are a deliberate, testable integration step) — but the path is proven.
+
+## ✅ Wired into the app (2026-06-30)
+`run_payroll` now generates the batch proof **in the browser** (`web/lib/prove.ts`,
+`proveBatchInBrowser`) instead of loading a fixture: noir_js executes the witness from the
+amounts + recipient keys, bb.js produces the UltraHonk proof (single-thread → no cross-origin
+isolation headers needed), and it's submitted to the v2 contract. Verified headlessly in Chromium:
+proof 14,592 bytes, public_inputs 800 bytes, **~2.4s**. The proof format is identical to the
+on-chain-verified one from the Node spike. (Withdraw still uses a fixture this pass.)

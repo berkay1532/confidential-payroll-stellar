@@ -17,8 +17,8 @@ this push and what remains. Live demo is on Stellar testnet; full money loop wor
    verified end-to-end on testnet (see `01-key-separation.md`).
 2. **Hide the employer total** (item 1b) — encrypt the pool balance; conservation proven
    in-circuit. (Designed.)
-3. **Wire item 2 into the app** — bb.js WASM in a Web Worker + COOP/COEP headers; prove on-device
-   from real amounts. (Proven feasible.)
+3. ~~Wire item 2 into the app~~ ✅ **DONE** — `run_payroll` proves on-device in the browser
+   (~2.4s, single-thread, no isolation headers). See `02-client-side-proving.md`.
 4. **Security audit** — Soroban contracts + Noir circuits (independent).
 5. **Verifier dependency** — `rs-soroban-ultrahonk` is community/WIP + unaudited; track its audit
    + stability, or vendor a hardened fork.

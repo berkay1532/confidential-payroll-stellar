@@ -5,6 +5,7 @@ import { NETWORK, CONTRACTS, DEMO_RECIPIENTS, DEMO_VIEWING_KEYS } from "@/lib/co
 import * as payroll from "@/lib/contract";
 import { decryptBalance } from "@/lib/decrypt";
 import { connectWallet, signTx } from "@/lib/wallet";
+import { proveBatchInBrowser } from "@/lib/prove";
 import { track } from "@/lib/analytics";
 import { Logo, Wordmark } from "@/components/Logo";
 
@@ -60,12 +61,13 @@ export default function Home() {
   }
   async function doRunPayroll() {
     if (!need()) return;
-    setStatus({ msg: "Submitting confidential payroll proof…", kind: "busy" });
+    setStatus({ msg: "Generating zero-knowledge proof in your browser…", kind: "busy" });
     try {
       const nonce = crypto.getRandomValues(new Uint8Array(32));
-      const [pi, proof] = await Promise.all([loadBin("batch_public_inputs.bin"), loadBin("batch_proof.bin")]);
-      const h = await payroll.runPayroll(nonce, pi, proof, address, sign); track("run_payroll");
-      setStatus({ msg: "Payroll run — salaries hidden on-chain", href: NETWORK.explorerTx(h), kind: "ok" }); refresh();
+      const { proof, publicInputs } = await proveBatchInBrowser(); // on-device proving
+      setStatus({ msg: "Submitting confidential payroll…", kind: "busy" });
+      const h = await payroll.runPayroll(nonce, publicInputs, proof, address, sign); track("run_payroll");
+      setStatus({ msg: "Payroll run — proof generated on-device, salaries hidden on-chain", href: NETWORK.explorerTx(h), kind: "ok" }); refresh();
     } catch (e) { setStatus({ msg: `Payroll failed: ${(e as Error).message}`, kind: "err" }); }
   }
   async function doWithdraw() {

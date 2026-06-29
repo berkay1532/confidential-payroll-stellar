@@ -32,6 +32,12 @@ function field(hex: string, start: number): bigint {
   return BigInt("0x" + hex.slice(start, start + 64));
 }
 
+/** Public key for a scalar: k·G on Grumpkin, returned as 0x-hex affine coords. */
+export function pubkeyHex(k: bigint): { x: string; y: string } {
+  const P = G.multiply(k).toAffine();
+  return { x: "0x" + P.x.toString(16), y: "0x" + P.y.toString(16) };
+}
+
 /**
  * Decrypt a 128-byte (256-hex) ElGamal ciphertext (c1.x|c1.y|c2.x|c2.y) with a viewing key.
  * Returns the cleartext amount, or null if not found within `max` (bounded discrete log).

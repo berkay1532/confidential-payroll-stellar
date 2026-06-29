@@ -75,3 +75,10 @@ design system, and *also* publish a component gallery to the Obscura design proj
   fund → run_payroll → withdraw (1,000 USDC out) → auditor decrypts with viewing keys.
 - Switched the frontend to the v2 stack + viewing keys + v2 demo proofs. Contract tests updated for
   the v2 layout (4/4 pass). The old v1 stack remains deployed but the app now points at v2.
+
+### Item 2 GO-LIVE: in-browser proving wired into the app
+- `lib/prove.ts` generates the batch payroll proof on-device (noir_js + bb.js, single-thread to
+  avoid SharedArrayBuffer / COOP-COEP — which would break the RPC/wallet calls). `run_payroll` now
+  proves in-browser (~2.4s in Chromium), no batch fixture. Build passes; headless-verified.
+- Kept single-thread deliberately (no cross-origin-isolation headers) so analytics/RPC/wallet keep
+  working. Withdraw proving left on fixture this pass (needs live-balance decryption + fresh r).
