@@ -12,6 +12,15 @@ auditable.
 > highest-leverage items (viewing≠spending keys, client-side proving) already *proven* — is in
 > [`docs/production/`](docs/production/README.md).
 
+> 🧩 **Aligned with the official standard.** Stellar's new [Confidential Tokens developer
+> preview](https://stellar.org/blog/developers/developer-preview-confidential-tokens-on-stellar)
+> (OpenZeppelin + Nethermind) uses the **same curve (Grumpkin), the same verifier
+> (`rs-soroban-ultrahonk`, identical commit), and the same model** (amounts hidden, addresses
+> visible, SEP-41/USDC wrapper, auditor keys, compliance policy) that Obscura arrived at
+> independently. For production, Obscura builds *on* that official primitive and stays the
+> **payroll vertical** on top — see
+> [`docs/production/03-align-with-oz-confidential-token.md`](docs/production/03-align-with-oz-confidential-token.md).
+
 ---
 
 ## The problem

@@ -82,3 +82,14 @@ design system, and *also* publish a component gallery to the Obscura design proj
   proves in-browser (~2.4s in Chromium), no batch fixture. Build passes; headless-verified.
 - Kept single-thread deliberately (no cross-origin-isolation headers) so analytics/RPC/wallet keep
   working. Withdraw proving left on fixture this pass (needs live-balance decryption + fresh r).
+
+### Align with the official Stellar Confidential Token (OZ + Nethermind)
+- Stellar shipped a Confidential Tokens developer preview (OpenZeppelin contracts + Nethermind
+  UltraHonk verifier). It matches what we built independently: **same curve (Grumpkin), same
+  verifier repo+commit (rs-soroban-ultrahonk @ 661db07), same model** (amounts hidden, addresses
+  visible, SEP-41/USDC wrapper, auditor keys, compliance policy).
+- Decision: position Obscura as the **payroll vertical built on the official OZ Confidential
+  Token** for production (payroll run = batched `confidential_transfer`s; auditor = OZ dual-auditor
+  ECDH; compliance = OZ policy contract). Keep the standalone hackathon build as-is. Documented the
+  full mapping + migration in `03-align-with-oz-confidential-token.md`; made it the headline
+  production step. This aligns Obscura with the ecosystem's official, soon-to-be-audited primitive.

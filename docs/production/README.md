@@ -13,8 +13,14 @@ this push and what remains. Live demo is on Stellar testnet; full money loop wor
 | Analytics + feedback | Plausible + in-app widget |
 
 ## 🔴 Critical path to production (remaining)
+0. **← Headline: build the confidential-balance layer on the official OZ Confidential Token**
+   (replaces our custom ElGamal contracts) — inherits Pedersen balances, dual-auditor ECDH,
+   spender delegation, and a compliance policy engine on a soon-to-be-audited primitive. Obscura
+   stays the **payroll vertical** on top; this subsumes audit + compliance + auditor-key items.
+   See [`03-align-with-oz-confidential-token.md`](03-align-with-oz-confidential-token.md).
 1. ~~Wire item 1 into a v2 contract~~ ✅ **DONE & LIVE** — v2 stack deployed; viewing≠spending
-   verified end-to-end on testnet (see `01-key-separation.md`).
+   verified end-to-end on testnet (see `01-key-separation.md`). *(For production, OZ provides this
+   natively — see item 0.)*
 2. **Hide the employer total** (item 1b) — encrypt the pool balance; conservation proven
    in-circuit. (Designed.)
 3. ~~Wire item 2 into the app~~ ✅ **DONE** — `run_payroll` proves on-device in the browser
