@@ -27,3 +27,5 @@ spike/ultrahonk_soroban_contract/
 spike/**/target/
 
 circuits/**/target/
+
+spike/cct-demo/
