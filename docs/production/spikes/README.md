@@ -69,3 +69,36 @@ the audited-soon primitive.
   transfer) and submits them as one batched `run_payroll`. (Single-transfer routing proven above;
   the loop is proven by the unit test.)
 - Point the Obscura UI's "Run confidential payroll" at `orchestrator.run_payroll`.
+
+---
+
+## N-sequential-proof batched payroll ✅ (complete)
+
+The full batched flow, verified on testnet: **N transfer proofs generated entirely offline**, then
+submitted via `orchestrator.run_payroll` in resource-capped chunks.
+
+**The offline-sequencing technique** (`payroll-batch-chunked.ts`): each transfer debits the
+employer's spendable, so proof *i+1* must use the state after proof *i*. The OZ SDK's
+`TransferWitness.next = {v, r}` gives the post-op sender opening; we feed it back with
+`StateEngine.setSpendable(next)` so the next proof is built against the updated balance — all
+**before any on-chain submission**.
+
+**Per-tx resource cap (empirical):** ~**2 `confidential_transfer`s per transaction**. N=2 fits;
+N≥3 → `txSorobanInvalid (-17)` (each transfer verifies an UltraHonk proof + Pedersen updates +
+auditor ECDH, so the per-tx CPU/footprint budget is reached fast). So a payroll of N employees is
+chunked into ⌈N/2⌉ `run_payroll` txs (each a unique nonce; proofs already ordered).
+
+**Result (4 employees):**
+```
+generating 4 sequential transfer proofs OFFLINE… (Ada, Borys, Chen, Diego)
+submitting payroll in chunks of 2:
+  chunk 1: tx 33eca2a8… OK (2 transfers)
+  chunk 2: tx c51e8eed… OK (2 transfers)
+[verify] employer spendable = 950 (16000 - 15050) ✓
+  Ada 4200 · Borys 3100 · Chen 5000 · Diego 2750  received ✓
+✅ batched confidential payroll complete (2 txs)
+```
+
+Conservation holds across the whole payroll; every salary stays confidential on the official
+primitive. **This closes the batched-payroll piece** — only the UI rewire (point "Run confidential
+payroll" at this flow) remains.
