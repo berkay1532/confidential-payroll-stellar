@@ -76,3 +76,14 @@ stack end-to-end and is a credible proof we understand the problem). For **produ
 the confidential-balance layer to the **official OZ Confidential Token** and keep Obscura as the
 payroll application on top. This aligns us with the ecosystem's official, soon-to-be-audited
 primitive and lets us focus entirely on the payroll vertical.
+
+## ✅ Verified: the official contracts build here (2026-06-30)
+Cloned the official demo ([`brozorec/stellar-confidential-token-demo`](https://github.com/brozorec/stellar-confidential-token-demo))
+and `cargo check`-ed the confidential-token contract — it **compiles** (2m22s). Its dependency
+graph resolves:
+- `stellar-tokens` (the OZ confidential-token package) from the `feat/confidential-verifier-ultrahonk` branch,
+- `ultrahonk_soroban_verifier` from **`NethermindEth/rs-soroban-ultrahonk @ 661db07`** — the exact
+  verifier + commit Obscura already depends on.
+
+So building Obscura's payroll vertical on the official primitive is concretely viable today, on the
+same verifier we already ship.
