@@ -1,12 +1,10 @@
-// Client-side ElGamal decryption over Grumpkin (Noir's embedded curve for the BN254 backend).
-// An auditor holding an employee's viewing key can decrypt that employee's on-chain balance —
-// selective disclosure — while the public only sees ciphertext.
-//
-// NOTE (MVP simplification): here the viewing key equals the spending key (sk). A production
-// design would derive a view-only key so auditors can read but not spend.
+// Client-side ElGamal decryption over Grumpkin for the standalone (v2) Obscura contracts.
+// Uses @noble/curves v2 (aliased as `noble-curves-v2` so it stays isolated from the OZ SDK's
+// pinned @noble/curves v1). The production path is the OZ Confidential Token (Pedersen + ECDH);
+// this module backs the legacy standalone v2 demo only.
 
-import { weierstrass } from "@noble/curves/abstract/weierstrass.js";
-import { Field } from "@noble/curves/abstract/modular.js";
+import { weierstrass } from "noble-curves-v2/abstract/weierstrass.js";
+import { Field } from "noble-curves-v2/abstract/modular.js";
 
 // Grumpkin: y^2 = x^3 - 17 over Fp (= BN254 scalar field); group order n = BN254 base field.
 const p = 21888242871839275222246405745257275088548364400416034343698204186575808495617n;
@@ -46,7 +44,6 @@ export function decryptBalance(ctHex: string, sk: bigint, max = 60000): number |
   if (!ctHex || ctHex.length < 256) return null;
   const C1 = Grumpkin.fromAffine({ x: field(ctHex, 0), y: field(ctHex, 64) });
   const C2 = Grumpkin.fromAffine({ x: field(ctHex, 128), y: field(ctHex, 192) });
-  // M = C2 - sk*C1 = amount*G
   const M = C2.subtract(C1.multiply(sk));
   let acc = Grumpkin.ZERO;
   for (let k = 0; k <= max; k++) {
