@@ -93,3 +93,10 @@ design system, and *also* publish a component gallery to the Obscura design proj
   ECDH; compliance = OZ policy contract). Keep the standalone hackathon build as-is. Documented the
   full mapping + migration in `03-align-with-oz-confidential-token.md`; made it the headline
   production step. This aligns Obscura with the ecosystem's official, soon-to-be-audited primitive.
+
+### Batch-transfer circuit — parked as a future OZ contribution
+- A single proof for N transfers (vs OZ's per-transfer model, ~2/tx) would remove chunking and let
+  a whole payroll settle in one tx — a real upstream contribution to OpenZeppelin/stellar-contracts
+  (or an Obscura extension). Documented in `04-future-batch-transfer-circuit.md`.
+- Decision: park it (new circuit = significant design + audit; OZ is still pre-audit). Proceed now
+  with **chunking** (aligned with the official per-transfer docs) — already verified + scales.
