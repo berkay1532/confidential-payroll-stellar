@@ -39,3 +39,33 @@ circuit VKs registered, auditor key id 0.)
   **runs end-to-end on testnet** using the official contracts + SDK.
 - Next: a thin `PayrollOrchestrator` (batch the transfers + payroll metadata/period nonces/events)
   and rewire the Obscura UI's `run_payroll` to this flow.
+
+---
+
+## PayrollOrchestrator — Obscura as an on-chain protocol layer on OZ ✅
+
+A thin Soroban contract ([`contracts/orchestrator`](../../../contracts/orchestrator)) that batches
+the official `confidential_transfer`s into one payroll transaction with payroll semantics (single
+employer auth, anti-replay period nonce, payroll event). 2,360-byte wasm.
+
+| | |
+|---|---|
+| PayrollOrchestrator (testnet) | `CDW2NEUEHXUN6G5W62E4YMR26F2YFXPB74UZ34PEO5UVU4BGSU7WHXF4` |
+| wired to OZ token | `CC6LHLBJE6AZDDME2XMQAVXNNHOLEOJMXRDTENX2I4XI6FKETWJNSLD4` |
+
+- **Unit tests (2/2):** routes N `confidential_transfer`s, rejects replayed nonce, rejects
+  recipient/data length mismatch.
+- **Live routing (`orchestrator-route.ts`):** built a real transfer proof and called
+  `orchestrator.run_payroll(employer, nonce, [employee], [data])` — the orchestrator cross-called
+  `token.confidential_transfer`; **employee received 4200** (tx `51da3fed…`). Nested auth works
+  (employer as tx source covers the inner transfer).
+
+So Obscura is now a real **on-chain protocol layer over the official OZ Confidential Token**: the
+employer runs payroll through one Obscura entry point; each salary is a confidential transfer on
+the audited-soon primitive.
+
+## Remaining wiring
+- Client generates the N sequential transfer proofs offline (employer's spendable decreases per
+  transfer) and submits them as one batched `run_payroll`. (Single-transfer routing proven above;
+  the loop is proven by the unit test.)
+- Point the Obscura UI's "Run confidential payroll" at `orchestrator.run_payroll`.
